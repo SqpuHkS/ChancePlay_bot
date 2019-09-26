@@ -3,6 +3,12 @@ import requests
 # print(text_content)
 from config import URL
 
+
+#
+#РЕАЛИЗОВАТЬ ВСЕ НОРМАЛЬНО ЧЕРЕЗ ФУНКЦИИ БЕЗ ГЛОБАЛЬНЫХ ПЕРЕМЕННЫХ И Т.Д.
+#
+#ПОДГОТОВИТЬ ДАННЫЕ ДЛЯ ОТПРАВКИ В БАЗУ (ПРИВЕСТИ ИХ К НУЖНОМУ ТИПУ)
+
 BASE_URL = URL
 
 page_information = requests.get(BASE_URL, timeout = 5)

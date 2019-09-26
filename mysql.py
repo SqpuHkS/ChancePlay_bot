@@ -49,3 +49,14 @@ def mysql_change_check(message):
     finally:
         connection.close()
 
+#нужно сделать входящие данные которые принимаются как аргумент готовыми под типы данных в БД
+#при чем данные должны быть в виде одного запроса, не все сразу
+def parsing_add_teams(text_content):
+    connection = get_connection()
+    try:
+        with connection.cursor() as cursor:
+            sql = 'INSERT INTO matches(first_team_name, second_team_name, match_date) VALUES (%s, %s, %s)'
+            cursor.execute(sql, (text_content[0], text_content[1], text_content[2]))
+        connection.commit()
+    finally:
+        connection.close()
