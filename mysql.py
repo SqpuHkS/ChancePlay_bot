@@ -19,7 +19,7 @@ def mysql_start_check(message):
     try:
         with connection.cursor() as cursor:
             sql = 'SELECT * FROM clients WHERE telegram_id = {}'.format(message.chat.id)
-            if(cursor.execute(sql) == 0):
+            if cursor.execute(sql) == 0:
                 return False
             else:
                 return True
@@ -42,7 +42,7 @@ def mysql_change_check(message):
     try:
         with connection.cursor() as cursor:
             sql = 'SELECT * FROM clients WHERE telegram_id = {} AND nickname = "{}"'.format(message.chat.id, message.text)
-            if(cursor.execute(sql) == 0):
+            if cursor.execute(sql) == 0:
                 return False
             else:
                 return True
@@ -51,12 +51,39 @@ def mysql_change_check(message):
 
 #нужно сделать входящие данные которые принимаются как аргумент готовыми под типы данных в БД
 #при чем данные должны быть в виде одного запроса, не все сразу
-def parsing_add_teams(text_content):
+def parsing_insert_data(home_team, guest_team, date, time, home_score, guest_score,status):
     connection = get_connection()
     try:
         with connection.cursor() as cursor:
-            sql = 'INSERT INTO matches(first_team_name, second_team_name, match_date) VALUES (%s, %s, %s)'
-            cursor.execute(sql, (text_content[0], text_content[1], text_content[2]))
+            sql = '''INSERT INTO matches(home_team,
+             guest_team,
+              match_date,
+               match_time,
+                home_team_score,
+                 guest_team_score,
+                 is_end)
+             VALUES (%s, %s, %s, %s, %s, %s, %s)'''
+            cursor.execute(sql, (home_team, guest_team,date,time,home_score,guest_score, status))
         connection.commit()
     finally:
         connection.close()
+
+def parsing_check_data(home_team, guest_team, time):
+    connection = get_connection()
+    try:
+        with connection.cursor() as cursor:
+            sql = '''SELECT * 
+            FROM matches 
+            WHERE home_team = "{}" 
+            AND guest_team = "{}" 
+            AND match_time = "{}"
+            '''.format(home_team, guest_team, time)
+            if cursor.execute(sql)==0:
+                print('False')
+                return False
+            else:
+                print('True')
+                return True
+    finally:
+        connection.close()
+
