@@ -1,7 +1,7 @@
 from bs4 import BeautifulSoup
 import requests
 from config import MATCH_URL
-from datetime import date
+import datetime
 import mysql
 
 #Получаем данные (статус игры, дату, время)
@@ -41,17 +41,7 @@ def get_score():
     return content
 
 def get_date():
-    return date.today()
-
-#получаем статус игры
-def get_status():
-    foo, bar = get_data(), []
-    for i in foo:
-        if i[:2] == 'FT':
-            bar.append('FT')
-        else:
-            bar.append('WB')
-    return bar
+    return datetime.date.today()
 
 def get_time():
     foo, bar = get_data(), []
@@ -61,6 +51,20 @@ def get_time():
         bar.append(str(i)+str(temp[2:]))
     return bar
 
+#получаем статус игры
+def get_status():
+    foo, bar = get_data(), []
+    print(get_time(), datetime.datetime.now().time())
+    for i in foo:
+        if i[:2] == 'FT':
+            bar.append('FT')
+
+        else:
+            bar.append('WB')
+    return bar
+
+get_status()
+
 #проходит по сайту, ищет новые матчи и добавляет если такого не существует в БД
 def insert_new_matches():
     home, guest, time, score, date, status = get_home_teams(), get_guest_teams(), get_time(), get_score(), get_date(), get_status()
@@ -68,5 +72,14 @@ def insert_new_matches():
     for i in range(len(home)):
         if mysql.parsing_check_data(home[i], guest[i], time[i]) == False:
             mysql.parsing_insert_data(home[i], guest[i], date, time[i], score[temp0+2], score[temp1+2], status[i])
+        temp0 += 2
+        temp1 += 2
+
+#сделать функцию которая обновляет информацию в БД
+def update_matches():
+    score, status = get_score(), get_status()
+    temp0, temp1 = -2, -1
+    for i in range(len(status)):
+        mysql.parsing_update_data(score[temp0+2], score[temp1+2], status[i], datetime.date.today())
         temp0 += 2
         temp1 += 2

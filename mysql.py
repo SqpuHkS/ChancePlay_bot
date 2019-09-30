@@ -24,6 +24,7 @@ def mysql_start_check(message):
             else:
                 return True
     finally:
+        connection.commit()
         connection.close()
 
 def mysql_change_UPDATE(message):
@@ -47,6 +48,7 @@ def mysql_change_check(message):
             else:
                 return True
     finally:
+        connection.commit()
         connection.close()
 
 #нужно сделать входящие данные которые принимаются как аргумент готовыми под типы данных в БД
@@ -79,11 +81,24 @@ def parsing_check_data(home_team, guest_team, time):
             AND match_time = "{}"
             '''.format(home_team, guest_team, time)
             if cursor.execute(sql)==0:
-                print('False')
                 return False
             else:
-                print('True')
                 return True
     finally:
+        connection.commit()
         connection.close()
 
+def parsing_update_data(home_score, guest_score, status, date):
+    connection = get_connection()
+    try:
+        with connection.cursor() as cursor:
+            sql = '''UPDATE matches
+            SET home_team_score = {},
+            guest_team_score = {},
+            is_end = "{}"
+            WHERE match_date = "{}"
+            '''.format(home_score, guest_score, status, date)
+            cursor.execute(sql)
+        connection.commit()
+    finally:
+        connection.close()
