@@ -51,19 +51,29 @@ def get_time():
         bar.append(str(i)+str(temp[2:]))
     return bar
 
+
+#Проверяем на всякий случай, если сайт ошибся и не выставил статус игры FT, увеличиваем время на 2 часа
+#Чтоб стало по часовому поясу равно нашему времени и  еще на 2 чтоб игра точно закончилась
+#И сверяем и предоставляем статус игры FT
+def check_time_for_status(iterable):
+    time_func, time_lib = get_time(), datetime.datetime.now().strftime('%H')
+    if int(iterable[-10:-8])+4 < int(time_lib):
+        return True
+    else:
+        return False
+
+
 #получаем статус игры
 def get_status():
     foo, bar = get_data(), []
-    print(get_time(), datetime.datetime.now().time())
     for i in foo:
         if i[:2] == 'FT':
             bar.append('FT')
-
+        elif  check_time_for_status(i) == True:
+            bar.append('FT')
         else:
             bar.append('WB')
     return bar
-
-get_status()
 
 #проходит по сайту, ищет новые матчи и добавляет если такого не существует в БД
 def insert_new_matches():
@@ -77,9 +87,11 @@ def insert_new_matches():
 
 #сделать функцию которая обновляет информацию в БД
 def update_matches():
-    score, status = get_score(), get_status()
+    score, status, home_team = get_score(), get_status(), get_home_teams()
     temp0, temp1 = -2, -1
     for i in range(len(status)):
-        mysql.parsing_update_data(score[temp0+2], score[temp1+2], status[i], datetime.date.today())
+        mysql.parsing_update_data(score[temp0+2], score[temp1+2], status[i], datetime.date.today(), home_team[i])
         temp0 += 2
         temp1 += 2
+
+update_matches()

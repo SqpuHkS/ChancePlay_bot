@@ -88,7 +88,7 @@ def parsing_check_data(home_team, guest_team, time):
         connection.commit()
         connection.close()
 
-def parsing_update_data(home_score, guest_score, status, date):
+def parsing_update_data(home_score, guest_score, status, date, home_team):
     connection = get_connection()
     try:
         with connection.cursor() as cursor:
@@ -97,7 +97,8 @@ def parsing_update_data(home_score, guest_score, status, date):
             guest_team_score = {},
             is_end = "{}"
             WHERE match_date = "{}"
-            '''.format(home_score, guest_score, status, date)
+            AND home_team = "{}"
+            '''.format(home_score, guest_score, status, date, home_team)
             cursor.execute(sql)
         connection.commit()
     finally:
