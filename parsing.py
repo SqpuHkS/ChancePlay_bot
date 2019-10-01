@@ -2,7 +2,9 @@ from bs4 import BeautifulSoup
 import requests
 from config import MATCH_URL
 import datetime
-import mysql
+from mysql import *
+import time
+from threading import Thread
 
 #Получаем данные с сайта в виде(статус игры, дата, время)
 def get_data():
@@ -82,28 +84,46 @@ def get_status():
 
 #проходит по сайту, ищет новые матчи и добавляет если такого не существует в БД
 #функция нужна буквально раз в день либо каждый час для профилактики
-def insert_new_matches():
-    home, guest, time, \
-    score, date, status = get_home_teams(), get_guest_teams(), get_time(),\
-                          get_score(), get_date(), get_status()
 
-    #начинаем с отрицательных и прибавляем каждую итерацию +2,
-    #чтобы не попадало на те же цифры
-    #к примеру -2+2 = 0, -1+2 = 1
-    #след. итерация 0+2 = 2, 1+2 = 3 и т.д.
-    temp0, temp1 = -2, -1
-    for i in range(len(home)):
-        #проверяю существуют ли уже такие данные в таблице
-        if mysql.parsing_check_data(home[i], guest[i], time[i]) == False:
-            mysql.parsing_insert_data(home[i], guest[i], date, time[i], score[temp0+2], score[temp1+2], status[i])
-        temp0 += 2
-        temp1 += 2
+def insert_new_matches():
+    while True:
+        home, guest, time0, \
+        score, date, status = get_home_teams(), get_guest_teams(), get_time(), \
+                            get_score(), get_date(), get_status()
+
+        #начинаем с отрицательных и прибавляем каждую итерацию +2,
+        #чтобы не попадало на те же цифры
+        #к примеру -2+2 = 0, -1+2 = 1
+        #след. итерация 0+2 = 2, 1+2 = 3 и т.д.
+        temp0, temp1 = -2, -1
+        for i in range(len(home)):
+            #проверяю существуют ли уже такие данные в таблице
+            if parsing_check_data(home[i], guest[i], time0[i]) == False:
+                parsing_insert_data(home[i], guest[i], date, time0[i], score[temp0+2], score[temp1+2], status[i])
+            temp0 += 2
+            temp1 += 2
+        print('insert')
+        time.sleep(3600)
 
 #Обновляет информацию (счет команд, статус игр)
 def update_matches():
-    score, status, home_team = get_score(), get_status(), get_home_teams()
-    temp0, temp1 = -2, -1
-    for i in range(len(status)):
-        mysql.parsing_update_data(score[temp0+2], score[temp1+2], status[i], datetime.date.today(), home_team[i])
-        temp0 += 2
-        temp1 += 2
+    while True:
+        score, status, home_team = get_score(), get_status(), get_home_teams()
+        temp0, temp1 = -2, -1
+        for i in range(len(status)):
+            parsing_update_data(score[temp0+2], score[temp1+2], status[i], datetime.date.today(), home_team[i])
+            temp0 += 2
+            temp1 += 2
+        print('update')
+        time.sleep(300)
+
+if __name__ == "__main__":
+    t1 = Thread(target=insert_new_matches)
+    t2 = Thread(target=update_matches)
+    t1.setDaemon(True)
+    t2.setDaemon(True)
+    t1.start()
+    t2.start()
+    while True:
+        pass
+

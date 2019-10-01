@@ -49,6 +49,5 @@ def next_step_change(message):
         mysql.mysql_change_UPDATE(message)
 
 
-
 if __name__ == '__main__':
     bot.polling(none_stop=True)
