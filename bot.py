@@ -19,6 +19,11 @@ def handle_change(message):
     msg = bot.send_message(message.chat.id, 'Write your new nickname')
     bot.register_next_step_handler(msg, next_step_change)
 
+# @bot.message_handler(commands=['matches'])
+# def handle_matches(message):
+
+
+
 # Сделать реализацию команды имейл чтоб хранилась в базе и дать за это 50 коинов
 # @bot.message_handler(commands=['email'])
 # def handle_start(message):
@@ -35,6 +40,7 @@ def handle_change(message):
 
 #ниже хрень нужна чтоб удалять потом сообщения бота ставок которые уже прошли, дату удаления ставить на начало матча, чтобы не ставили во время матча
 #bot.delete_message(message.chat.id, message.message_id)
+#либо же можно использовать editMessageText, но про нее стопроцентно не знаю, надо узнать
 
 
 

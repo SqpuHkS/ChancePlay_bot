@@ -115,7 +115,7 @@ def update_matches():
             temp0 += 2
             temp1 += 2
         print('update')
-        time.sleep(300)
+        time.sleep(150)
 
 if __name__ == "__main__":
     t1 = Thread(target=insert_new_matches)
