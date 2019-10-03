@@ -2,6 +2,7 @@ import pymysql.cursors
 from config import get_connection
 import telebot
 from bot import bot
+from datetime import date
 
 #Все функции нужные для парсинга начинаются с 'parsing_'
 #Все функции нужные для работы с ботом начинаются с 'mysql_'
@@ -111,4 +112,35 @@ def parsing_update_data(home_score, guest_score, status, date, home_team):
             cursor.execute(sql)
         connection.commit()
     finally:
+        connection.close()
+
+def mysql_select_home_teams():
+    connection = get_connection()
+    try:
+        with connection.cursor() as cursor:
+            sql = '''SELECT home_team
+                    FROM matches
+                    WHERE match_date = '{}'
+                    '''.format(date.today())
+            return cursor.execute(sql)
+    finally:
+        connection.commit()
+        connection.close()
+
+
+def mysql_get_teams(data):
+    connection = get_connection()
+    try:
+        with connection.cursor() as cursor:
+            foobar = []
+            sql = '''SELECT {}
+                    FROM matches
+                    WHERE match_date = '{}'
+                    '''.format(data, date.today())
+            cursor.execute(sql)
+            for row in cursor:
+                foobar.append(row[data])
+            return foobar
+    finally:
+        connection.commit()
         connection.close()

@@ -1,8 +1,34 @@
 import config
 import telebot
 import mysql
+from telebot.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 bot = telebot.TeleBot(config.token)
+
+
+#создает кнопки для ставок
+def gen_markup():
+    markup = InlineKeyboardMarkup()
+    markup.row_width = 3
+    length, home_team, guest_team, id = mysql.mysql_select_home_teams(), mysql.mysql_get_teams('home_team'), \
+                                        mysql.mysql_get_teams('guest_team'), mysql.mysql_get_teams('main_id')
+    for i in range(length):
+        markup.add(InlineKeyboardButton(home_team[i], callback_data='cb_home_team_{}'.format(id[i])),
+                    InlineKeyboardButton('Draw', callback_data='cb_draw_{}'.format(id[i])),
+                    InlineKeyboardButton(guest_team[i], callback_data='cb_guest_team_{}'.format(id[i])))
+    return markup
+
+@bot.callback_query_handler(func=lambda call: True)
+def callback_query(call):
+    length, home_team, guest_team, id = mysql.mysql_select_home_teams(), mysql.mysql_get_teams('home_team'), \
+                                        mysql.mysql_get_teams('guest_team'), mysql.mysql_get_teams('main_id')
+    for i in range(length):
+        if call.data == 'cb_home_team_{}'.format(id[i]):
+            #mysql запрос в базу данных ставок
+        elif call.data == 'cb_draw_{}'.format(id[i]):
+            #mysql запрос в базу данных ставок
+        elif call.data == 'cb_guest_team_{}'.format(id[i]):
+            # mysql запрос в базу данных ставок
 
 @bot.message_handler(commands=['start'])
 def handle_start(message):
@@ -19,9 +45,13 @@ def handle_change(message):
     msg = bot.send_message(message.chat.id, 'Write your new nickname')
     bot.register_next_step_handler(msg, next_step_change)
 
-# @bot.message_handler(commands=['matches'])
-# def handle_matches(message):
+# @bot.callback_query_handler(func=lambda call: True)
+# def callback_query(call):
+#     if call.data ==
 
+@bot.message_handler(commands=['matches'])
+def handle_matches(message):
+    bot.send_message(message.chat.id, "Today's matches:", reply_markup=gen_markup())
 
 
 # Сделать реализацию команды имейл чтоб хранилась в базе и дать за это 50 коинов
