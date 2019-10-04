@@ -2,7 +2,8 @@ from bs4 import BeautifulSoup
 import requests
 from config import MATCH_URL
 import datetime
-from mysql import *
+import mysql_matches
+import mysql_bets
 import time
 from threading import Thread
 
@@ -82,9 +83,18 @@ def get_status():
             bar.append('WB')
     return bar
 
+#инициализирую двумя ставками каждый из матчей, чтобы можно было отображать сразу коэффициент
+def initial_bets(home_team, guest_team):
+    while True:
+        for i in range(len(home_team)):
+            main_id = mysql_matches.mysql_get_main_id(home_team[i], guest_team[i])
+            if mysql_bets.mysql_check_initial_bets(main_id, 1) == False and mysql_bets.mysql_check_initial_bets(main_id, 2) == False:
+                mysql_bets.mysql_insert_initial_bets(main_id, 1)
+                mysql_bets.mysql_insert_initial_bets(main_id, 2)
+        time.sleep(120)
+
 #проходит по сайту, ищет новые матчи и добавляет если такого не существует в БД
 #функция нужна буквально раз в день либо каждый час для профилактики
-
 def insert_new_matches():
     while True:
         home, guest, time0, \
@@ -98,12 +108,13 @@ def insert_new_matches():
         temp0, temp1 = -2, -1
         for i in range(len(home)):
             #проверяю существуют ли уже такие данные в таблице
-            if parsing_check_data(home[i], guest[i], time0[i]) == False:
-                parsing_insert_data(home[i], guest[i], date, time0[i], score[temp0+2], score[temp1+2], status[i])
+            if mysql_matches.parsing_check_data(home[i], guest[i], time0[i]) == False:
+                mysql_matches.parsing_insert_data(home[i], guest[i], date, time0[i], score[temp0+2], score[temp1+2], status[i])
             temp0 += 2
             temp1 += 2
+        initial_bets(home, guest)
         print('insert')
-        time.sleep(3600)
+        time.sleep(120)
 
 #Обновляет информацию (счет команд, статус игр)
 def update_matches():
@@ -111,11 +122,12 @@ def update_matches():
         score, status, home_team = get_score(), get_status(), get_home_teams()
         temp0, temp1 = -2, -1
         for i in range(len(status)):
-            parsing_update_data(score[temp0+2], score[temp1+2], status[i], datetime.date.today(), home_team[i])
+            mysql_matches.parsing_update_data(score[temp0+2], score[temp1+2], status[i], datetime.date.today(), home_team[i])
             temp0 += 2
             temp1 += 2
         print('update')
-        time.sleep(150)
+        time.sleep(60)
+
 
 if __name__ == "__main__":
     t1 = Thread(target=insert_new_matches)

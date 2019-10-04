@@ -1,66 +1,13 @@
 import pymysql.cursors
 from config import get_connection
 import telebot
-from bot import bot
 from datetime import date
 
 #Все функции нужные для парсинга начинаются с 'parsing_'
 #Все функции нужные для работы с ботом начинаются с 'mysql_'
 
-#Добавляет пользователя в базу данных
-def mysql_start_INSERT(message):
-    connection = get_connection()
-    try:
-        with connection.cursor() as cursor:
-            sql = "INSERT INTO clients (telegram_id, nickname, tokens) VALUES (%s, %s, %s)"
-            cursor.execute(sql, (message.chat.id, message.text, 100))
-            bot.send_message(message.chat.id, 'Your account have been created, you have 100 tokens in your pocket')
-        connection.commit()
-    finally:
-        connection.close()
-
-#Проверяет зарегистрирован ли пользователь уже в БД
-def mysql_start_check(message):
-    connection = get_connection()
-    try:
-        with connection.cursor() as cursor:
-            sql = 'SELECT * FROM clients WHERE telegram_id = {}'.format(message.chat.id)
-            if cursor.execute(sql) == 0:
-                return False
-            else:
-                return True
-    finally:
-        connection.commit()
-        connection.close()
-
-#Изменение имени пользователя
-def mysql_change_UPDATE(message):
-    connection = get_connection()
-    try:
-        with connection.cursor() as cursor:
-            sql = 'UPDATE clients SET nickname = "{}" WHERE telegram_id = {}'.format(message.text, message.chat.id)
-            cursor.execute(sql)
-            bot.send_message(message.chat.id, 'Changes saved')
-        connection.commit()
-    finally:
-        connection.close()
-
-#Проверяет случайно не тот же никнейм что и нынешний вводит пользователь
-def mysql_change_check(message):
-    connection = get_connection()
-    try:
-        with connection.cursor() as cursor:
-            sql = 'SELECT * FROM clients WHERE telegram_id = {} AND nickname = "{}"'.format(message.chat.id, message.text)
-            if cursor.execute(sql) == 0:
-                return False
-            else:
-                return True
-    finally:
-        connection.commit()
-        connection.close()
-
 #В качестве аргументов функции используем все данные требуемые
-#для заполнения таблицы, далее используя запрос вставляем новые даные в таблицу
+#для заполнения таблицы, и инициализируем начальные две ставки
 def parsing_insert_data(home_team, guest_team, date, time, home_score, guest_score,status):
     connection = get_connection()
     try:
@@ -114,6 +61,7 @@ def parsing_update_data(home_score, guest_score, status, date, home_team):
     finally:
         connection.close()
 
+
 def mysql_select_home_teams():
     connection = get_connection()
     try:
@@ -141,6 +89,26 @@ def mysql_get_teams(data):
             for row in cursor:
                 foobar.append(row[data])
             return foobar
+    finally:
+        connection.commit()
+        connection.close()
+
+#получает главное айди матча
+def mysql_get_main_id(home_team, guest_team):
+    connection = get_connection()
+    print(home_team, guest_team, date.today())
+    try:
+        with connection.cursor() as cursor:
+            sql = '''SELECT main_id
+                            FROM matches
+                            WHERE home_team = '{}' AND 
+                            guest_team = '{}' AND
+                            match_date = '{}'
+                            '''.format(home_team, guest_team, date.today())
+            cursor.execute(sql)
+            temp = cursor
+            for row in cursor:
+                return row['main_id']
     finally:
         connection.commit()
         connection.close()

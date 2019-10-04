@@ -1,44 +1,53 @@
 import config
 import telebot
-import mysql
+import mysql_matches
+import mysql_bets
+import mysql_clients
 from telebot.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 bot = telebot.TeleBot(config.token)
 
+def get_coefficient():
+    id = mysql_matches.mysql_get_teams('main_id')
+    for i in id:
+        temp0 = mysql_bets.mysql_get_tokens(i)
 
 #создает кнопки для ставок
 def gen_markup():
     markup = InlineKeyboardMarkup()
     markup.row_width = 3
-    length, home_team, guest_team, id = mysql.mysql_select_home_teams(), mysql.mysql_get_teams('home_team'), \
-                                        mysql.mysql_get_teams('guest_team'), mysql.mysql_get_teams('main_id')
+    length, home_team, guest_team, id = mysql_matches.mysql_select_home_teams(), mysql_matches.mysql_get_teams('home_team'), \
+                                        mysql_matches.mysql_get_teams('guest_team'), mysql_matches.mysql_get_teams('main_id')
     for i in range(length):
         markup.add(InlineKeyboardButton(home_team[i], callback_data='cb_home_team_{}'.format(id[i])),
-                    InlineKeyboardButton('Draw', callback_data='cb_draw_{}'.format(id[i])),
-                    InlineKeyboardButton(guest_team[i], callback_data='cb_guest_team_{}'.format(id[i])))
+                   InlineKeyboardButton('Draw', callback_data='cb_draw_{}'.format(id[i])),
+                   InlineKeyboardButton(guest_team[i], callback_data='cb_guest_team_{}'.format(id[i])))
     return markup
 
 @bot.callback_query_handler(func=lambda call: True)
 def callback_query(call):
-    length, home_team, guest_team, id = mysql.mysql_select_home_teams(), mysql.mysql_get_teams('home_team'), \
-                                        mysql.mysql_get_teams('guest_team'), mysql.mysql_get_teams('main_id')
-    for i in range(length):
-        if call.data == 'cb_home_team_{}'.format(id[i]):
-            #mysql запрос в базу данных ставок
-        elif call.data == 'cb_draw_{}'.format(id[i]):
-            #mysql запрос в базу данных ставок
-        elif call.data == 'cb_guest_team_{}'.format(id[i]):
-            # mysql запрос в базу данных ставок
+    length, home_team, guest_team, id = mysql_matches.mysql_select_home_teams(), mysql_matches.mysql_get_teams('home_team'), \
+                                        mysql_matches.mysql_get_teams('guest_team'), mysql_matches.mysql_get_teams('main_id')
+    # for i in range(length):
+    #     if call.data == 'cb_home_team_{}'.format(id[i]):
+    #         #формирую запрос, но жду следующего шага чтобы отправить запрос с количеством денег в ставке
+    #         #сохраняю данные в состояние и после того как написал количество вызываю запрос INSERT данных в таблице бэт
+    #     elif call.data == 'cb_draw_{}'.format(id[i]):
+    #         # формирую запрос, но жду следующего шага чтобы отправить запрос с количеством денег в ставке
+    #         # сохраняю данные в состояние и после того как написал количество вызываю запрос INSERT данных в таблице бэт
+    #     elif call.data == 'cb_guest_team_{}'.format(id[i]):
+    #         # формирую запрос, но жду следующего шага чтобы отправить запрос с количеством денег в ставке
+    #         # сохраняю данные в состояние и после того как написал количество вызываю запрос INSERT данных в таблице бэт
 
 @bot.message_handler(commands=['start'])
 def handle_start(message):
-    temp = mysql.mysql_start_check(message)
+    temp = mysql_clients.mysql_start_check(message)
     if temp == True:
         bot.send_message(message.chat.id,
                          'You are already registered, if you want to change your nickname press /change')
     else:
         msg = bot.send_message(message.chat.id, 'Write your nickname to start the game')
-        bot.register_next_step_handler(msg, mysql.mysql_start_INSERT)
+        bot.register_next_step_handler(msg, mysql_clients.mysql_start_INSERT)
 
 @bot.message_handler(commands=['change'])
 def handle_change(message):
@@ -73,16 +82,17 @@ def handle_matches(message):
 #либо же можно использовать editMessageText, но про нее стопроцентно не знаю, надо узнать
 
 
+# def next_first_step_bet(call):
 
 
 
 def next_step_change(message):
-    temp = mysql.mysql_change_check(message)
+    temp = mysql_clients.mysql_change_check(message)
     if temp == True:
         bot.send_message(message.chat.id,
                          'It\'s your nickname yet, if you want to change your nickname press /change')
     else:
-        mysql.mysql_change_UPDATE(message)
+        mysql_clients.mysql_change_UPDATE(message)
 
 
 if __name__ == '__main__':
