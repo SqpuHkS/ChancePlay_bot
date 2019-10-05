@@ -34,13 +34,12 @@ def mysql_get_tokens(match_id):
             cursor.execute(sql)
             for row in cursor:
                 temp += row['tokens']
-                print(temp)
             return temp
     finally:
         connection.commit()
         connection.close()
 
-def mysql_insert_initial_bets(match_id, result):
+def mysql_insert_initial_bets(match_id, result, time):
     connection = get_connection()
     try:
         with connection.cursor() as cursor:
@@ -51,10 +50,11 @@ def mysql_insert_initial_bets(match_id, result):
                 coefficient,
                 tokens,
                 status,
-                bet_date)
-                VALUES (%s,%s,%s,%s,%s,%s,%s)
+                bet_date,
+                match_time)
+                VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
                 '''
-            cursor.execute(sql, (331328422, match_id, result, 1.5, 50, 2, date.today()))
+            cursor.execute(sql, (331328422, match_id, result, 1.5, 50, 2, date.today(), time))
         connection.commit()
     finally:
         connection.close()
@@ -63,16 +63,14 @@ def mysql_check_initial_bets(match_id, match_result):
     connection = get_connection()
     try:
         with connection.cursor() as cursor:
-            print(match_id, match_result)
             sql = '''SELECT *
                 FROM bets
                 WHERE telegram_id = {} AND 
                 match_id = {} AND
                 match_result = {} AND
-                coefficient = {} AND
                 tokens = {} AND
                 bet_date = '{}'
-                                '''.format(331328422, match_id, match_result, 1.5, 50, date.today())
+                                '''.format(331328422, match_id, match_result, 50, date.today())
             if cursor.execute(sql) == 0:
                 return False
             else:

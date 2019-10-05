@@ -12,32 +12,41 @@ def get_coefficient():
     for i in id:
         temp0 = mysql_bets.mysql_get_tokens(i)
 
-#создает кнопки для ставок
+#added it
 def gen_markup():
+    markup = InlineKeyboardMarkup()
+    markup.row_width = 1
+    length, home_team, guest_team, id, time = mysql_matches.mysql_select_home_teams(), mysql_matches.mysql_get_teams('home_team'), \
+                                        mysql_matches.mysql_get_teams('guest_team'), mysql_matches.mysql_get_teams('main_id'), \
+                                        mysql_matches.mysql_get_teams('match_time')
+    for i in range(length):
+        markup.add(InlineKeyboardButton(home_team[i]+' — '+str(time[i])[:-3]+' — '+guest_team[i], callback_data='cb_match{}'.format(id[i])))
+    return markup
+
+#added it
+#создает кнопки для ставок
+def gen_bet():
     markup = InlineKeyboardMarkup()
     markup.row_width = 3
     length, home_team, guest_team, id = mysql_matches.mysql_select_home_teams(), mysql_matches.mysql_get_teams('home_team'), \
                                         mysql_matches.mysql_get_teams('guest_team'), mysql_matches.mysql_get_teams('main_id')
     for i in range(length):
         markup.add(InlineKeyboardButton(home_team[i], callback_data='cb_home_team_{}'.format(id[i])),
-                   InlineKeyboardButton('Draw', callback_data='cb_draw_{}'.format(id[i])),
-                   InlineKeyboardButton(guest_team[i], callback_data='cb_guest_team_{}'.format(id[i])))
+                   InlineKeyboardButton(guest_team[i], callback_data='cb_guest_team_{}'.format(id[i])),
+                    InlineKeyboardButton('Draw', callback_data='cb_draw_{}'.format(id[i])))
     return markup
 
+
+#added it
 @bot.callback_query_handler(func=lambda call: True)
 def callback_query(call):
     length, home_team, guest_team, id = mysql_matches.mysql_select_home_teams(), mysql_matches.mysql_get_teams('home_team'), \
                                         mysql_matches.mysql_get_teams('guest_team'), mysql_matches.mysql_get_teams('main_id')
-    # for i in range(length):
-    #     if call.data == 'cb_home_team_{}'.format(id[i]):
-    #         #формирую запрос, но жду следующего шага чтобы отправить запрос с количеством денег в ставке
-    #         #сохраняю данные в состояние и после того как написал количество вызываю запрос INSERT данных в таблице бэт
-    #     elif call.data == 'cb_draw_{}'.format(id[i]):
-    #         # формирую запрос, но жду следующего шага чтобы отправить запрос с количеством денег в ставке
-    #         # сохраняю данные в состояние и после того как написал количество вызываю запрос INSERT данных в таблице бэт
-    #     elif call.data == 'cb_guest_team_{}'.format(id[i]):
-    #         # формирую запрос, но жду следующего шага чтобы отправить запрос с количеством денег в ставке
-    #         # сохраняю данные в состояние и после того как написал количество вызываю запрос INSERT данных в таблице бэт
+    for i in range(length):
+        if call.data == 'cb_match{}'.format(id[i]):
+            gen_bet()
+            #формирую запрос, но жду следующего шага чтобы отправить запрос с количеством денег в ставке
+            #сохраняю данные в состояние и после того как написал количество вызываю запрос INSERT данных в таблице бэт
 
 @bot.message_handler(commands=['start'])
 def handle_start(message):

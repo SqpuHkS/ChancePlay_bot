@@ -68,8 +68,9 @@ def mysql_select_home_teams():
         with connection.cursor() as cursor:
             sql = '''SELECT home_team
                     FROM matches
-                    WHERE match_date = '{}'
-                    '''.format(date.today())
+                    WHERE match_date = '{}' AND
+                    is_end = '{}'
+                    '''.format(date.today(), 'WB')
             return cursor.execute(sql)
     finally:
         connection.commit()
@@ -83,8 +84,9 @@ def mysql_get_teams(data):
             foobar = []
             sql = '''SELECT {}
                     FROM matches
-                    WHERE match_date = '{}'
-                    '''.format(data, date.today())
+                    WHERE match_date = '{}' AND 
+                    is_end = '{}'
+                    '''.format(data, date.today(), 'WB')
             cursor.execute(sql)
             for row in cursor:
                 foobar.append(row[data])
@@ -96,7 +98,6 @@ def mysql_get_teams(data):
 #получает главное айди матча
 def mysql_get_main_id(home_team, guest_team):
     connection = get_connection()
-    print(home_team, guest_team, date.today())
     try:
         with connection.cursor() as cursor:
             sql = '''SELECT main_id
@@ -106,7 +107,6 @@ def mysql_get_main_id(home_team, guest_team):
                             match_date = '{}'
                             '''.format(home_team, guest_team, date.today())
             cursor.execute(sql)
-            temp = cursor
             for row in cursor:
                 return row['main_id']
     finally:

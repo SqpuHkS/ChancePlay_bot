@@ -69,29 +69,32 @@ def check_time_for_status(iterable):
         return False
 
 
-#получаем статус игры (FT - закончена, WB - предстоит)
+#получаем статус игры (FT - закончена, WB - предстоит, ST - началась но не закончилась)
 #так же добавил проверку на случай если сайт по каким-то причинам не добавил
 #в ячейку статуса игры ее конец (при помощи функции проверяю не прошло ли уже 2 часа после игры)
 def get_status():
     foo, bar = get_data(), []
     for i in foo:
-        if i[:2] == 'FT':
+        temp = i[:2]
+        if temp == 'FT':
             bar.append('FT')
         elif  check_time_for_status(i) == True:
             bar.append('FT')
+        elif "'" in i[:4] or temp == 'HT':
+            bar.append('ST')
         else:
             bar.append('WB')
     return bar
 
 #инициализирую двумя ставками каждый из матчей, чтобы можно было отображать сразу коэффициент
-def initial_bets(home_team, guest_team):
-    while True:
-        for i in range(len(home_team)):
-            main_id = mysql_matches.mysql_get_main_id(home_team[i], guest_team[i])
-            if mysql_bets.mysql_check_initial_bets(main_id, 1) == False and mysql_bets.mysql_check_initial_bets(main_id, 2) == False:
-                mysql_bets.mysql_insert_initial_bets(main_id, 1)
-                mysql_bets.mysql_insert_initial_bets(main_id, 2)
-        time.sleep(120)
+def initial_bets(home_team, guest_team, get_time):
+    for i in range(len(home_team)):
+        main_id = mysql_matches.mysql_get_main_id(home_team[i], guest_team[i])
+        if main_id == None:
+            continue
+        if mysql_bets.mysql_check_initial_bets(main_id, 1) == False and mysql_bets.mysql_check_initial_bets(main_id, 2) == False:
+            mysql_bets.mysql_insert_initial_bets(main_id, 1, get_time[i])
+            mysql_bets.mysql_insert_initial_bets(main_id, 2, get_time[i])
 
 #проходит по сайту, ищет новые матчи и добавляет если такого не существует в БД
 #функция нужна буквально раз в день либо каждый час для профилактики
@@ -112,7 +115,7 @@ def insert_new_matches():
                 mysql_matches.parsing_insert_data(home[i], guest[i], date, time0[i], score[temp0+2], score[temp1+2], status[i])
             temp0 += 2
             temp1 += 2
-        initial_bets(home, guest)
+        initial_bets(home, guest, time0)
         print('insert')
         time.sleep(120)
 
