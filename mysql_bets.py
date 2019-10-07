@@ -21,16 +21,17 @@ def mysql_insert_bets(telegram_id, match_id, result, coefficient, tokens, status
     finally:
         connection.close()
 
-def mysql_get_tokens(match_id):
+def mysql_get_tokens(match_id, match_result):
     connection = get_connection()
     try:
         with connection.cursor() as cursor:
             temp = 0
             sql = '''SELECT {}
                         FROM bets
-                        WHERE bet_date = '{}',
-                        match_id = '{}'
-                        '''.format('tokens', date.today(), match_id)
+                        WHERE bet_date = '{}' AND 
+                        match_id = '{}' AND 
+                        match_result = {}
+                        '''.format('tokens', date.today(), match_id, match_result)
             cursor.execute(sql)
             for row in cursor:
                 temp += row['tokens']

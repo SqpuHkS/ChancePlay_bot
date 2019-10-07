@@ -55,3 +55,19 @@ def mysql_change_check(message):
     finally:
         connection.commit()
         connection.close()
+
+def mysql_get_tokens(user_id):
+    connection = get_connection()
+    try:
+        with connection.cursor() as cursor:
+            sql = '''SELECT tokens
+                    FROM clients
+                    WHERE telegram_id = {}
+                                '''.format(user_id)
+            cursor.execute(sql)
+            for row in cursor:
+                print(row)
+                return row['tokens']
+    finally:
+        connection.commit()
+        connection.close()
