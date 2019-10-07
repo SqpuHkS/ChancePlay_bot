@@ -1,6 +1,6 @@
-import pymysql.cursors
 from config import get_connection
 from datetime import date
+from time import gmtime, strftime
 
 def mysql_insert_bets(telegram_id, match_id, result, coefficient, tokens, status):
     connection = get_connection()
@@ -9,6 +9,7 @@ def mysql_insert_bets(telegram_id, match_id, result, coefficient, tokens, status
             sql = '''INSERT INTO bets(
             telegram_id,
             match_id,
+            time_of_bet,
             match_result,
             coefficient,
             tokens,
@@ -16,7 +17,7 @@ def mysql_insert_bets(telegram_id, match_id, result, coefficient, tokens, status
             bet_date)
             VALUES (%s,%s,%s,%s,%s,%s,%s)
             '''
-            cursor.execute(sql, (telegram_id, match_id, result, coefficient, tokens, status, date.today()))
+            cursor.execute(sql, (telegram_id, match_id, strftime("%H:%M:%S", gmtime()),result, coefficient, tokens, status, date.today()))
         connection.commit()
     finally:
         connection.close()
@@ -47,15 +48,16 @@ def mysql_insert_initial_bets(match_id, result, time):
             sql = '''INSERT INTO bets(
                 telegram_id,
                 match_id,
+                time_of_bet,
                 match_result,
                 coefficient,
                 tokens,
                 status,
                 bet_date,
                 match_time)
-                VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
+                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)
                 '''
-            cursor.execute(sql, (331328422, match_id, result, 1.5, 50, 2, date.today(), time))
+            cursor.execute(sql, (331328422, match_id, strftime("%H:%M:%S", gmtime()),result, 1.5, 50, 2, date.today(), time))
         connection.commit()
     finally:
         connection.close()

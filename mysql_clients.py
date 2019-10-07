@@ -1,6 +1,4 @@
-import pymysql.cursors
 from config import get_connection
-from datetime import date
 from bot import bot
 
 #Добавляет пользователя в базу данных
@@ -66,7 +64,6 @@ def mysql_get_tokens(user_id):
                                 '''.format(user_id)
             cursor.execute(sql)
             for row in cursor:
-                print(row)
                 return row['tokens']
     finally:
         connection.commit()

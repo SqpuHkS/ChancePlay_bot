@@ -6,6 +6,7 @@ import mysql_clients
 from telebot.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 bot = telebot.TeleBot(config.token)
+token = 0
 
 def home_coef(home_bet_tokens, guest_bet_tokens, draw_bet_tokens):
     try:
@@ -62,7 +63,7 @@ def callback_query(call):
                                                 mysql_matches.mysql_get_teams('main_id'),\
                                                 mysql_clients.mysql_get_tokens(call.from_user.id),
 
-    msg = 'You have:  {} tokens \n Send a message with the amount of tokens you want to bet or choose one of the buttons below'.format(tokens)
+    msg = 'You have:  {} tokens \n\n How many tokens do you want to bet?'.format(tokens)
     for i in range(length):
         home_bet_tokens, guest_bet_tokens, draw_bet_tokens = mysql_bets.mysql_get_tokens(id[i], 1),\
                                                              mysql_bets.mysql_get_tokens(id[i], 2),\
@@ -81,8 +82,9 @@ def callback_query(call):
             #формирую запрос, но жду следующего шага чтобы отправить запрос с количеством денег в ставке
             #сохраняю данные в состояние и после того как написал количество вызываю запрос INSERT данных в таблице бэт
         if call.data == 'cb_home_team_{}'.format(id[i]):
-            msg = bot.send_message(call.message.chat.id, msg)
-
+            msg = "You have {} tokens. \n\nHow many tokens do you want to bet?".format(tokens)
+            msg_edit = bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=msg)
+            bot.register_next_step_handler(msg_edit, next_step_bet)
         # if call.data == 'cb_guest_team_{}'.format(id[i]):
         #
         # if call. data == 'cb_draw_{}'.format(id[i]):
@@ -134,8 +136,16 @@ def handle_matches(message):
 
 # def next_first_step_bet(call):
 
-# def next_step_bet():
-
+def next_step_bet(message):
+    try:
+        if message.text.isdigit() and int(message.text) <= mysql_clients.mysql_get_tokens(message.from_user.id):
+            global token
+            token = message.text
+            bot.send_message(message.chat.id, "Your bet has been processed")
+        else:
+            bot.send_message(message.chat.id, "Something is WrOnG!. \n\nTry it again /matches")
+    except:
+        bot.send_message(message.chat.id, "Something is WrOnG!. \n\nTry it again /matches")
 
 def next_step_change(message):
     temp = mysql_clients.mysql_change_check(message)

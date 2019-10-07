@@ -1,6 +1,4 @@
-import pymysql.cursors
 from config import get_connection
-import telebot
 from datetime import date
 
 #Все функции нужные для парсинга начинаются с 'parsing_'

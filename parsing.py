@@ -7,6 +7,9 @@ import mysql_bets
 import time
 from threading import Thread
 
+
+
+
 #Получаем данные с сайта в виде(статус игры, дата, время)
 def get_data():
     time_info = requests.get(MATCH_URL, timeout=5)
