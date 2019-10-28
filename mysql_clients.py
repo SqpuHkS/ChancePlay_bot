@@ -10,9 +10,10 @@ def mysql_start_INSERT(message):
             sql = 'INSERT INTO clients (telegram_id, nickname, tokens, promo_code) VALUES (%s, %s, %s, %s)'
             cursor.execute(sql, (message.chat.id, message.text, 100, ref_code))
             bot.send_message(message.chat.id,
-                '''Your account have been created, you have 100 tokens in your pocket\n
-    Also your referral code is:  {}
-    More information: /info'''.format(ref_code))
+                '''✅ Ваш аккаунт был успешно создан, вы получаете 100 tokens на ваш баланс\n
+    📌 Ваш реферальный код:  {}
+    ❔ Больше информации: /info
+    🤖 Команды бота: /commands'''.format(ref_code))
         connection.commit()
     finally:
         connection.close()
@@ -39,7 +40,7 @@ def mysql_change_UPDATE(message):
         with connection.cursor() as cursor:
             sql = 'UPDATE clients SET nickname = "{}" WHERE telegram_id = {}'.format(message.text, message.chat.id)
             cursor.execute(sql)
-            bot.send_message(message.chat.id, "Changes saved")
+            bot.send_message(message.chat.id, "✅ Изменения сохранены!")
         connection.commit()
     finally:
         connection.close()

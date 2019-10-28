@@ -158,14 +158,15 @@ def mysql_update_result_and_pay_money():
                         END, 
                     bets.result_of_bet = CASE
                         WHEN bets.match_bet_result = matches.match_result
-                            THEN bets.result_of_bet = 2
+                            THEN  2
                         WHEN bets.match_bet_result != matches.match_result
-                            THEN bets.result_of_bet = 3
+                            THEN  3
                             ELSE bets.result_of_bet
                         END
                     WHERE matches.match_status = 2
                     AND bets.result_of_bet = 1
                     AND bet_status = 2
+                    AND bets.telegram_id = clients.telegram_id
                     '''
             cursor.execute(sql)
         connection.commit()

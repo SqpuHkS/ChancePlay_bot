@@ -8,8 +8,6 @@ import string
 from telebot.types import InlineKeyboardButton, InlineKeyboardMarkup
 from parsing import get_date
 
-#Сделать чтобы запрос отправился со статусом (WAIT) в ставку, а после того как пользователь ввел сумму ставки
-#UPDATE ставку изменить сумму ставки и изменить статус ставки на (DONE)
 
 bot = telebot.TeleBot(config.token)
 
@@ -23,11 +21,19 @@ def next_step_bet(message):
             if mysql_clients.mysql_user_tokens_minus_bet(message.from_user.id, message.text) == True:
                 main_id = mysql_bets.mysql_get_main_id(message.from_user.id, get_date())
                 mysql_bets.mysql_update_bets(main_id[-1], message.text)
-                bot.send_message(message.chat.id, "Your bet has been processed")
+                bot.send_message(message.chat.id, "✅ Ставка успешно обработана!")
         else:
-            bot.send_message(message.chat.id, "Something is WrOnG!. \n\nTry it again /matches")
+            bot.send_message(message.chat.id, "⛔️Упс, что-то пошло не так!. \n\nПопробуйте еще раз /matches")
     except:
-        bot.send_message(message.chat.id, "Something is WrOnG!. \n\nTry it again /matches")
+        bot.send_message(message.chat.id, "⛔️Упс, что-то пошло не так!. \n\nПопробуйте еще раз /matches")
+
+def next_step_change(message):
+    temp = mysql_clients.mysql_change_check(message)
+    if temp == True:
+        bot.send_message(message.chat.id,
+                         '⛔️Вы ввели ваше имя еще раз, если вы хотите поменять его, нажмите /change')
+    else:
+        mysql_clients.mysql_change_UPDATE(message)
 
 def home_coef(home_bet_tokens, guest_bet_tokens):
     try:
@@ -71,7 +77,7 @@ def gen_bet(i, home_team_bet, guest_team_bet, draw_team_bet):
                                         mysql_matches.mysql_get_teams('guest_team', get_date()), mysql_matches.mysql_get_teams('match_id', get_date())
     markup.add(InlineKeyboardButton(home_team[i] + '  ({})'.format(home_team_bet), callback_data='cb_home_team_{}'.format(id[i])),
                    InlineKeyboardButton(guest_team[i] + '  ({})'.format(guest_team_bet), callback_data='cb_guest_team_{}'.format(id[i])),
-                    InlineKeyboardButton('Draw' + '  ({})'.format(draw_team_bet), callback_data='cb_draw_{}'.format(id[i])))
+                    InlineKeyboardButton('Ничья' + '  ({})'.format(draw_team_bet), callback_data='cb_draw_{}'.format(id[i])))
     return markup
 
 
@@ -85,7 +91,7 @@ def callback_query(call):
                                                 mysql_matches.mysql_get_teams('match_id', get_date()),\
                                                 mysql_clients.mysql_get_tokens(call.from_user.id),
 
-    msg = "You have {} tokens. \n\nHow many tokens do you want to bet?".format(tokens)
+    msg = "💰 У вас {} tokens. \n\nСколько tokens вы хотите поставить?".format(tokens)
     for i in range(length):
         home_bet_tokens, guest_bet_tokens, draw_bet_tokens = mysql_bets.mysql_get_tokens(id[i], 1, get_date()),\
                                                              mysql_bets.mysql_get_tokens(id[i], 2, get_date()),\
@@ -94,7 +100,7 @@ def callback_query(call):
                                                        guest_coef(home_bet_tokens, guest_bet_tokens), \
                                                        draw_coef(home_bet_tokens, guest_bet_tokens)
         if call.data == 'cb_match{}'.format(id[i]) and mysql_matches.mysql_get_status(id[i], get_date()) == 1:
-            txt = 'Match coefficients: \t\n{home_team}  ({home_bet})\t\nDraw  ({draw})\t\n{guest_team}  ({guest_bet})\n'.format(home_team = home_team[i],
+            txt = '📊 Коэффициенты: \t\n{home_team}  ({home_bet})\t\nНичья  ({draw})\t\n{guest_team}  ({guest_bet})\n'.format(home_team = home_team[i],
                                                                                                                    home_bet = home_team_bet,
                                                                                                                    draw = draw_team_bet,
                                                                                                                    guest_team = guest_team[i],
@@ -125,14 +131,14 @@ def handle_start(message):
     temp = mysql_clients.mysql_start_check(message)
     if temp == True:
         bot.send_message(message.chat.id,
-                         'You are already registered, if you want to change your nickname press /change')
+                         '❌ Вы уже зарегистрированы, если хотите поменять никнейм, нажмите /change')
     else:
-        msg = bot.send_message(message.chat.id, 'Write your nickname to start the game')
+        msg = bot.send_message(message.chat.id, '✏️Отправьте ваш никнейм чтоб начать')
         bot.register_next_step_handler(msg, mysql_clients.mysql_start_INSERT)
 
 @bot.message_handler(commands=['change'])
 def handle_change(message):
-    msg = bot.send_message(message.chat.id, 'Write your new nickname')
+    msg = bot.send_message(message.chat.id, '📨 Отправьте ваш никнейм')
     bot.register_next_step_handler(msg, next_step_change)
 
 # @bot.callback_query_handler(func=lambda call: True)
@@ -142,9 +148,53 @@ def handle_change(message):
 @bot.message_handler(commands=['matches'])
 def handle_matches(message):
     if mysql_matches.mysql_select_home_teams(get_date()) == 0:
-        bot.send_message(message.chat.id, "Oops, no matches yet. ")
+        bot.send_message(message.chat.id, "⚠️Упс, нет матчей")
     else:
-        bot.send_message(message.chat.id, "Today's matches:" , reply_markup=gen_markup())
+        bot.send_message(message.chat.id, "⚽️Сегодняшние матчи:" , reply_markup=gen_markup())
+
+@bot.message_handler(commands=['help'])
+def handle_help(message):
+    msg = ''' ✌🏻 Вас приветствует ChancePlay_bot 
+    
+    🤑 Этот бот создан для ставок на футбольные матчи при помощи виртуальных денег.
+    
+    📌 Всю подробную информацию вы сможете найти используя определенные заготовленные сообщения.
+    
+    👉🏻 Все команды вы можете найти нажав на /commands.
+    
+    👇🏼 Так же самые основные команды находятся ниже вашей строки набора сообщения.
+    
+    👌🏾 Вы можете просто нажать на нужный вам и бот сразу же предоставит нужную информацию.
+    
+    📩 Так же вы можете все интересующие вопросы задавать создателю в личные сообщения @Slabeyshiy
+            
+                                ✅ Удачных ставок! ✅
+    '''
+    bot.send_message(message.chat.id, msg)
+
+
+@bot.message_handler(commands=['commands'])
+def handler_commands(message):
+    msg = '''📃Список всех заготовленных команд:
+    
+     /matches   (главная команда, выдает список всех матчей на сегодня)
+    
+     /start   (активирует бота, желательно использовать только при первой регистрации)
+     /help   (небольшой справочник о боте)
+     /commands   (список всех заготовленных команд)
+     /email   (добавление почты) - награда 50 токенов
+     /promo   (ваш промокод и информация о наградах) - награда 50 токенов
+     /change   (замена никнейма)
+     /info   (вся информация о вашем аккаунте)
+     /tokens   (количество токенов на вашем аккаунте)
+     /bets   (файл в котором хранятся все ваши ставки)
+     /top   (топ всех игроков с количеством токенов больше 500)
+    '''
+    bot.send_message(message.chat.id, msg)
+#
+# @bot.message_handler(commands=['email'])
+# def handler_email(message):
+
 
 # Сделать реализацию команды имейл чтоб хранилась в базе и дать за это 50 коинов
 # @bot.message_handler(commands=['email'])
@@ -167,14 +217,6 @@ def handle_matches(message):
 
 # def next_first_step_bet(call):
 
-
-def next_step_change(message):
-    temp = mysql_clients.mysql_change_check(message)
-    if temp == True:
-        bot.send_message(message.chat.id,
-                         'It\'s your nickname yet, if you want to change your nickname press /change')
-    else:
-        mysql_clients.mysql_change_UPDATE(message)
 
 
 if __name__ == '__main__':
